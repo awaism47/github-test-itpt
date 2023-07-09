@@ -3,6 +3,9 @@ const express =  require("express")
 const bodyParser = require("body-parser")
 const mongoose = require('mongoose');
 const encrypt = require('mongoose-encryption')
+const bcrypt = require("bcrypt")
+const saltRounds=10;
+
 
 require('dotenv').config(); 
 
@@ -51,8 +54,11 @@ app.post("/login", function(req, res) {
         console.log(foundUser)
 
         if(foundUser) {
-            if(foundUser.password === password)
-            res.render("secrets")
+           bcrypt.compare(password,foundUser.password,function(err,result){
+            if (result===true){
+                res.render("Secrets")
+            }
+           })
         }
     })
 })
@@ -66,13 +72,14 @@ app.get("/logout", function(req, res) {
     res.render("home")
 })
 app.post("/register", function(req, res) {
-    const newUser = new User({
-        email: req.body.username,
-        password: req.body.password
-    })
-
-    newUser.save().then(function(err) {
-      res.render("secrets")
+    bcrypt.hash(req.body.password,saltRounds,function(err,hash){
+        const newUser= new User({
+            email:req.body.username,
+            password:hash
+        })
+        newUser.save().then(function(err){
+            res.render("secrets")
+        })
     })
 })
 
